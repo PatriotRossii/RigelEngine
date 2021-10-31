@@ -1,4 +1,4 @@
-/* Copyright (C) 2017, Nikolai Wuttke. All rights reserved.
+/* Copyright (C) 2021, Nikolai Wuttke. All rights reserved.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,47 +16,36 @@
 
 #pragma once
 
-#include "base/color.hpp"
+#include "base/math_tools.hpp"
 #include "base/spatial_types.hpp"
-
-#include <vector>
-
-namespace rigel::renderer
-{
-class Renderer;
-}
 
 
 namespace rigel::engine
 {
 
-class RandomNumberGenerator;
-
-struct ParticleGroup;
-
-
-class ParticleSystem
+inline base::Point<float> lerp(
+  const base::Point<float>& a,
+  const base::Point<float>& b,
+  const float factor)
 {
-public:
-  ParticleSystem(
-    RandomNumberGenerator* pRandomGenerator,
-    renderer::Renderer* pRenderer);
-  ~ParticleSystem();
+  return {base::lerp(a.x, b.x, factor), base::lerp(a.y, b.y, factor)};
+}
 
-  void synchronizeTo(const ParticleSystem& other);
+inline base::Point<float>
+  lerp(const base::Vector& a, const base::Vector& b, const float factor)
+{
+  return lerp(base::cast<float>(a), base::cast<float>(b), factor);
+}
 
-  void spawnParticles(
-    const base::Vector& origin,
-    const base::Color& color,
-    int velocityScaleX = 0);
+template <typename T>
+base::Vector lerpRounded(
+  const base::Point<T>& a,
+  const base::Point<T>& b,
+  const float factor)
+{
+  const auto lerped = lerp(base::cast<float>(a), base::cast<float>(b), factor);
 
-  void update();
-  void render(const base::Vector& cameraPosition, float interpolation);
-
-private:
-  std::vector<ParticleGroup> mParticleGroups;
-  RandomNumberGenerator* mpRandomGenerator;
-  renderer::Renderer* mpRenderer;
-};
+  return {base::round(lerped.x), base::round(lerped.y)};
+}
 
 } // namespace rigel::engine
