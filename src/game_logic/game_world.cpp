@@ -25,7 +25,9 @@
 #include "data/sound_ids.hpp"
 #include "data/strings.hpp"
 #include "data/unit_conversions.hpp"
+#include "engine/base_components.hpp"
 #include "engine/entity_tools.hpp"
+#include "engine/motion_smoothing.hpp"
 #include "engine/physical_components.hpp"
 #include "game_logic/actor_tag.hpp"
 #include "game_logic/behavior_controller.hpp"
@@ -52,6 +54,7 @@ using namespace engine;
 using namespace std;
 
 using data::PlayerModel;
+using engine::components::InterpolateMotion;
 using engine::components::WorldPosition;
 
 
@@ -630,6 +633,17 @@ void GameWorld::updateGameLogic(const PlayerInput& input)
 
   mHudRenderer.updateAnimation();
   mMessageDisplay.update();
+
+  if (mpOptions->mMotionSmoothing)
+  {
+    // Store current positions of all interpolated entities for use as
+    // previous positions after the current update is done.
+    mpState->mEntities.each<InterpolateMotion, WorldPosition>(
+      [&](
+        entityx::Entity, InterpolateMotion& interp, const WorldPosition& pos) {
+        interp.mPreviousPosition = pos;
+      });
+  }
 
   if (mpState->mActiveBossEntity && mpState->mBossDeathAnimationStartPending)
   {
