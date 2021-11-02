@@ -994,8 +994,12 @@ void GameWorld::drawMapAndSprites(
     state.mEntities.each<TileDebris, WorldPosition>(
       [&](
         entityx::Entity e, const TileDebris& debris, const WorldPosition& pos) {
+        const auto pixelPosition =
+          engine::interpolatedPixelPosition(e, interpolationFactor);
         state.mMapRenderer.renderSingleTile(
-          debris.mTileIndex, pos, params.mRenderStartPosition);
+          debris.mTileIndex,
+          pixelPosition -
+            data::tileVectorToPixelVector(params.mRenderStartPosition));
       });
   };
 
