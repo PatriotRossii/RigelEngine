@@ -22,6 +22,7 @@
 #include "data/game_traits.hpp"
 #include "data/unit_conversions.hpp"
 #include "engine/life_time_components.hpp"
+#include "engine/motion_smoothing.hpp"
 #include "engine/physics_system.hpp"
 #include "engine/random_number_generator.hpp"
 #include "engine/sprite_factory.hpp"
@@ -106,7 +107,7 @@ namespace
 {
 
 // Assign gravity affected moving body component
-template <typename EntityLike>
+template <bool enableInterpolation = true, typename EntityLike>
 void addDefaultMovingBody(EntityLike& entity, const BoundingBox& boundingBox)
 {
   using namespace engine::components::parameter_aliases;
@@ -116,6 +117,14 @@ void addDefaultMovingBody(EntityLike& entity, const BoundingBox& boundingBox)
   entity.template assign<BoundingBox>(boundingBox);
   entity.template assign<ActivationSettings>(
     ActivationSettings::Policy::AlwaysAfterFirstActivation);
+
+  // We use constexpr if here because this function can also be used on types
+  // that aren't ex::Entity. Using a run-time if would lead to compilation
+  // errors for those types, since enableInterpolation expects an ex::Entity.
+  if constexpr (enableInterpolation)
+  {
+    engine::enableInterpolation(entity);
+  }
 }
 
 
@@ -374,6 +383,7 @@ entityx::Entity EntityFactory::spawnProjectile(
   entity.assign<PlayerProjectile>(type);
   entity.assign<AutoDestroy>(
     AutoDestroy{AutoDestroy::Condition::OnLeavingActiveRegion});
+  engine::enableInterpolation(entity);
 
   const auto speed = speedForProjectileType(type);
   entity.assign<MovingBody>(
@@ -479,6 +489,7 @@ entityx::Entity spawnFloatingOneShotSprite(
   using namespace engine::components::parameter_aliases;
 
   auto entity = spawnOneShotSprite(factory, id, position);
+  engine::enableInterpolation(entity);
   entity.assign<MovingBody>(MovingBody{
     Velocity{0, -1.0f}, GravityAffected{false}, IgnoreCollisions{true}});
   return entity;
@@ -497,6 +508,7 @@ entityx::Entity spawnMovingEffectSprite(
   {
     entity.assign<AnimationLoop>(1);
   }
+  engine::enableInterpolation(entity);
   assignSpecialEffectSpriteProperties(entity, id);
   return entity;
 }
@@ -516,6 +528,7 @@ void spawnFloatingScoreNumber(
     Velocity{}, GravityAffected{false}, IgnoreCollisions{true});
   entity.assign<AutoDestroy>(AutoDestroy::afterTimeout(SCORE_NUMBER_LIFE_TIME));
   entity.assign<Active>();
+  engine::enableInterpolation(entity);
 }
 
 

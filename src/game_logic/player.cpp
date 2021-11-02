@@ -26,6 +26,7 @@
 #include "data/strings.hpp"
 #include "engine/collision_checker.hpp"
 #include "engine/entity_tools.hpp"
+#include "engine/motion_smoothing.hpp"
 #include "engine/random_number_generator.hpp"
 #include "engine/sprite_tools.hpp"
 #include "game_logic/actor_tag.hpp"
@@ -1980,6 +1981,8 @@ void Player::switchOrientationWithPositionChange()
 
   orientation = engine::orientation::opposite(orientation);
   position.x -= engine::orientation::toMovement(orientation);
+
+  engine::discardInterpolation(mEntity);
 }
 
 } // namespace rigel::game_logic
